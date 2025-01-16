@@ -1,18 +1,40 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.json`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { EmailMessage } from 'cloudflare:email';
+import { build } from 'letterbuilder';
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+interface Env {
+	EMAIL: {
+		send: (message: EmailMessage) => Promise<void>;
+	};
+}
+
+import { WorkerEntrypoint } from 'cloudflare:workers';
+
+export default class WorkerB extends WorkerEntrypoint<Env> {
+	async fetch(request: Request): Promise<Response> {
+		let json = {};
+		try {
+			json = await request.json();
+		} catch (e) {
+			return new Response('Invalid user input', { status: 400 });
+		}
+		const { from, to, subject, body } = json as { from: string; to: string; subject: string; body: string };
+		const email = await this.sendEmail({ from, to, subject, body });
+		if (email) {
+			return new Response('Email sent', { status: 200 });
+		}
+		return new Response('Hello', { status: 200 });
+	}
+	async sendEmail({ from, to, subject, body }: { from: string; to: string; subject: string; body: string }) {
+		if (!this.env.EMAIL) {
+			throw new Error('Email not configured');
+		}
+		if (!from || !to || !subject || !body) {
+			throw new Error('Insufficient parameters');
+		}
+		const msg = build({ from, to: [to], subject, text: body });
+
+		const message = new EmailMessage(from, to, msg);
+		await this.env.EMAIL.send(message);
+		return true;
+	}
+}
