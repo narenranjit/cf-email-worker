@@ -9,7 +9,7 @@ interface Env {
 
 import { WorkerEntrypoint } from 'cloudflare:workers';
 
-export default class WorkerB extends WorkerEntrypoint<Env> {
+export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 	async fetch(request: Request): Promise<Response> {
 		let json = {};
 		try {
