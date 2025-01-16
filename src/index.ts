@@ -1,4 +1,3 @@
-import { EmailMessage } from 'cloudflare:email';
 import { build } from 'letterbuilder';
 
 interface Env {
@@ -15,6 +14,7 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 		try {
 			json = await request.json();
 		} catch (e) {
+			console.error('Invalid input', e);
 			return new Response('Invalid user input', { status: 400 });
 		}
 		const { from, to, subject, body } = json as { from: string; to: string; subject: string; body: string };
@@ -26,15 +26,24 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 	}
 	async sendEmail({ from, to, subject, body }: { from: string; to: string; subject: string; body: string }) {
 		if (!this.env.EMAIL) {
+			console.error('Email not configured');
 			throw new Error('Email not configured');
 		}
 		if (!from || !to || !subject || !body) {
+			console.error('Insufficient parameters', { from, to, subject, body });
 			throw new Error('Insufficient parameters');
 		}
-		const msg = build({ from, to: [to], subject, text: body });
 
-		const message = new EmailMessage(from, to, msg);
-		await this.env.EMAIL.send(message);
+		try {
+			const cfMail = await import('cloudflare:email');
+			const msg = build({ from, to: [to], subject, text: body });
+
+			const message = new cfMail.EmailMessage(from, to, msg);
+			await this.env.EMAIL.send(message);
+		} catch (e) {
+			console.error('Email send error');
+			return false;
+		}
 		return true;
 	}
 }
