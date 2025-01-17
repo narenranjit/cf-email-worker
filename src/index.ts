@@ -1,4 +1,3 @@
-import { build } from 'letterbuilder';
 import { createMimeMessage } from 'mimetext';
 interface Env {
 	EMAIL: {
@@ -36,7 +35,6 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 
 		try {
 			const cfMail = await import('cloudflare:email');
-			const msgq = build({ from, to: [to], subject, text: body });
 			const msg = createMimeMessage();
 			msg.setSender({ name: from, addr: from });
 			msg.setRecipient(to);
