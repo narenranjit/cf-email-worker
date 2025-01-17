@@ -38,10 +38,12 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 			const cfMail = await import('cloudflare:email');
 			const msg = build({ from, to: [to], subject, text: body });
 
+			console.log('Sending email', { from, to, subject, body }, msg);
 			const message = new cfMail.EmailMessage(from, to, msg);
 			await this.env.EMAIL.send(message);
+			console.log('EMAIL sentl', { from, to, subject, body });
 		} catch (e) {
-			console.error('Email send error');
+			console.error('Email send error', e);
 			return false;
 		}
 		return true;
