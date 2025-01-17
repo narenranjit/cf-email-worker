@@ -1,0 +1,3 @@
+- Used via service binding by roasted-reads.
+- `wrangler dev` to start locally, but `cloudflare:email` doesn't work locally so it's not very useful
+- Auto deploys on push
