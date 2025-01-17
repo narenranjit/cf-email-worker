@@ -14,7 +14,7 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 			json = await request.json();
 		} catch (e) {
 			console.error('Invalid input', e);
-			return new Response('Invalid user input', { status: 400 });
+			return new Response('Invalid user input - this is meant to be called via POST', { status: 400 });
 		}
 		const { from, to, subject, body } = json as { from: string; to: string; subject: string; body: string };
 		const email = await this.sendEmail({ from, to, subject, body });
@@ -43,7 +43,7 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 				contentType: 'text/plain',
 				data: body,
 			});
-			console.log('Sending email', { from, to, subject, body }, msg.asRaw());
+			console.log('Sending email', { from, to, subject, body });
 			const message = new cfMail.EmailMessage(from, to, msg.asRaw());
 			await this.env.EMAIL.send(message);
 			console.log('Email sent!', { from, to, subject, body });
