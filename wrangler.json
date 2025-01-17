@@ -6,6 +6,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "cf-email-worker",
 	"main": "src/index.ts",
+	"compatibility_flags": ["nodejs_compat"],
 	"compatibility_date": "2025-01-09",
 	"observability": {
 		"enabled": true

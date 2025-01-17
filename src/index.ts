@@ -1,5 +1,5 @@
 import { build } from 'letterbuilder';
-
+import { createMimeMessage } from 'mimetext';
 interface Env {
 	EMAIL: {
 		send: (message: EmailMessage) => Promise<void>;
@@ -36,12 +36,19 @@ export default class EmailSendWorker extends WorkerEntrypoint<Env> {
 
 		try {
 			const cfMail = await import('cloudflare:email');
-			const msg = build({ from, to: [to], subject, text: body });
-
-			console.log('Sending email', { from, to, subject, body }, msg);
-			const message = new cfMail.EmailMessage(from, to, msg);
+			const msgq = build({ from, to: [to], subject, text: body });
+			const msg = createMimeMessage();
+			msg.setSender({ name: from, addr: from });
+			msg.setRecipient(to);
+			msg.setSubject(subject);
+			msg.addMessage({
+				contentType: 'text/plain',
+				data: body,
+			});
+			console.log('Sending email', { from, to, subject, body }, msg.asRaw());
+			const message = new cfMail.EmailMessage(from, to, msg.asRaw());
 			await this.env.EMAIL.send(message);
-			console.log('EMAIL sentl', { from, to, subject, body });
+			console.log('Email sent!', { from, to, subject, body });
 		} catch (e) {
 			console.error('Email send error', e);
 			return false;
